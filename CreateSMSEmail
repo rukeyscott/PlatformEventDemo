@@ -1,0 +1,49 @@
+ public static void createSMSEmail(Map<String,Id> addressIdMap,Map<String,String> addressMessageMap)
+     {
+         //all SMS email templates start with 'SMS'
+         String templateKeyword ='SMS%';
+         List<EmailTemplate> ets=[Select Id,Name from EmailTemplate where Name LIKE:templateKeyword];
+         System.debug('templates: '+ets);
+         List<Messaging.SingleEmailMessage> mails = new List<Messaging.SingleEmailMessage>();
+        
+         for(String toAddress:addressIdMap.keyset())
+         {
+             Id templateId = null;
+             for(EmailTemplate et:ets)
+             {
+                 //match the template to the message
+                
+                 system.debug(toAddress+ ' : '+addressMessageMap.values());
+                 if(addressMessageMap.containsKey(toAddress))
+                 {
+                     if(et.Name == addressMessageMap.get(toAddress))
+                     {
+                         templateId = et.Id;
+                         system.debug(' here');
+                    
+                     }
+                 }
+             }
+             List<String>toAddresses = new List<String>();
+             toAddresses.add(toAddress);
+             system.debug('toAddresses: '+toAddresses);
+             Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+             mail.setToAddresses(toAddresses);
+             mail.setTargetObjectId(addressIdMap.get(toAddress));
+             mail.setSenderDisplayName('Need A Car');
+             mail.setUseSignature(false);
+             mail.setBccSender(false);
+             mail.setSaveAsActivity(false);
+             mail.setTemplateId(templateId);
+             //dont send the message if there is no template
+             if(templateId != null)mails.add(mail);
+             system.debug('mails: '+mails);
+         }
+         if(mails.size()>0)
+         {
+            
+             Messaging.SendEmailResult[] results = Messaging.sendEmail( mails );
+             system.debug('MESSAGE SENT: ');
+         }
+        
+     }
