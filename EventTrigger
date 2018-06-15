@@ -1,0 +1,3 @@
+trigger SmartThermostatTrigger on Smart_Thermostat_Reading__e (after insert) {
+	SmartThermostatEventTriggerHandler.afterInsert(Trigger.new);
+}
