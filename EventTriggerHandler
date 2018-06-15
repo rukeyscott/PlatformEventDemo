@@ -1,0 +1,53 @@
+public class SmartThermostatEventTriggerHandler {
+	public static void afterInsert(List<Smart_Thermostat_Reading__e> newList)
+    {
+        system.debug('rewading: '+newList);
+        List<String> exIds = new List<String>();
+        List<Smart_Thermostat_Capture__c> captures = new List<Smart_Thermostat_Capture__c>();
+        for(Smart_Thermostat_Reading__e reading:newList)exIds.add(reading.DeviceId__c);
+        Map<String,Smart_Thermostat__c> thermMap = new Map<String,Smart_Thermostat__c>();
+        for(Smart_Thermostat__c therm:[Select Id,External_Thermostat_Id__c From Smart_Thermostat__c Where External_Thermostat_Id__c IN:exIds])
+        {
+            thermMap.put(therm.External_Thermostat_Id__c,therm);
+        }
+        boolean sendEmail = false;
+        for(Smart_Thermostat_Reading__e reading:newList)
+        {
+            if(thermMap.containsKey(reading.DeviceId__c))
+            {
+                Smart_Thermostat_Capture__c  cap = new Smart_Thermostat_Capture__c();
+            	cap.Smart_Thermostat__c = thermMap.get(reading.DeviceId__c).Id;
+        		cap.Temperature__c = reading.Temperature__c;
+                cap.Capture_DateTIme__c = DateTime.now();
+                captures.add(cap);
+                if(reading.Temperature__c>=85)
+                { 
+                    system.debug('send email');
+                 	sendEmail = true;
+                }
+            }
+        }
+        insert captures;
+        if(sendEmail)sendEmail();
+        
+    }
+    public static void sendEmail()
+    {
+        User usr = [Select Id,Email From User Where Email='8016233381@txt.att.net'];
+        Messaging.SingleEmailMessage message = new Messaging.SingleEmailMessage();
+        // Set recipients to two contact IDs.
+        // Replace IDs with valid record IDs in your org.
+        system.debug('email address: '+usr.Email);
+        message.toAddresses = new String[] { usr.Email };
+        
+        message.subject = 'ALERT';
+        message.plainTextBody = 'ALERT!!! Your Thermostat has exceeded the safe Tempaerature Threshold!!';
+        message.setSenderDisplayName('Smart Thermostat');
+        message.setUseSignature(false);
+        message.setBccSender(false);
+        message.setSaveAsActivity(false);
+        Messaging.SingleEmailMessage[] messages = new List<Messaging.SingleEmailMessage> {message};
+        Messaging.SendEmailResult[] results = Messaging.sendEmail(messages);
+       
+    }
+}
