@@ -1,4 +1,4 @@
- public static void notifyThermOwner(List<Contact> conList)
+ public static void NotifyThermOwner(List<Contact> conList)
     {
         System.debug('notifyContacts');
         List<MobilePhoneCarrierSetting__mdt > carrierCodes = [SELECT MasterLabel,SMS_Extension__c  From MobilePhoneCarrierSetting__mdt];
@@ -24,5 +24,5 @@
                 addressMessageMap.put(smsEmail,con.SMS_Messages__c);
             }
         }
-        if(addressIdMap.keyset().size()>0)createEmail(addressIdMap,addressMessageMap);
+        if(addressIdMap.keyset().size()>0)createSMSEmail(addressIdMap,addressMessageMap);
     }
