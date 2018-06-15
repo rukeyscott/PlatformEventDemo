@@ -1,0 +1,28 @@
+ public static void notifyThermOwner(List<Contact> conList)
+    {
+        System.debug('notifyContacts');
+        List<MobilePhoneCarrierSetting__mdt > carrierCodes = [SELECT MasterLabel,SMS_Extension__c  From MobilePhoneCarrierSetting__mdt];
+        List<String> toAddresses = new List<String>();
+        Map<String,MobilePhoneCarrierSetting__mdt> carrierMap = new Map<String,MobilePhoneCarrierSetting__mdt>();
+        for(MobilePhoneCarrierSetting__mdt mdt: carrierCodes)carrierMap.put(mdt.MasterLabel,mdt);
+        Map<String,Id> addressIdMap = new Map<String,String>();
+        Map<String,String> addressMessageMap = new Map<String,String>();
+        
+        for(Contact con:conList)
+        {
+            system.debug('carrierMap.containsKey(con.Mobile_Carrier__c): '+carrierMap.containsKey(con.Mobile_Carrier__c));
+            if(carrierMap.containsKey(con.Mobile_Carrier__c))
+            {
+                String phoneNum = con.MobilePhone.remove('(');
+                phoneNum = phoneNum.remove(')');
+                phoneNum = phoneNum.remove(' ');
+                phoneNum = phoneNum.remove('-');
+                String smsEmail = phoneNum + carrierMap.get(con.Mobile_Carrier__c).SMS_Extension__c;
+                system.debug('SMS Email Address: '+smsEmail);
+                con.SMS_Email__c = smsEmail;
+                addressIdMap.put(smsEmail,con.Id);
+                addressMessageMap.put(smsEmail,con.SMS_Messages__c);
+            }
+        }
+        if(addressIdMap.keyset().size()>0)createEmail(addressIdMap,addressMessageMap);
+    }
